@@ -77,11 +77,6 @@ def get_extensions():
             'include_dirs': [np.get_include()],
             }
 
-    elif 'darwin' in platform.system().lower():
-
-        extra_compile_args = ['-O3', '-mmacosx-version-min=10.7']
-        comp_args['extra_compile_args'] = extra_compile_args
-
     ext_module_pathprof_cygeometry = Extension(
         name='pycraf.geometry.cygeometry',
         sources=[os.path.join(PYXDIR, 'cygeometry.pyx')],

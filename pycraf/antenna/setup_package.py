@@ -78,11 +78,6 @@ def get_extensions():
             'include_dirs': [np.get_include()],
             }
 
-    elif 'darwin' in platform.system().lower():
-
-        extra_compile_args = ['-O3', '-mmacosx-version-min=10.7']
-        comp_args['extra_compile_args'] = extra_compile_args
-
     ext_module_pathprof_cyantenna = Extension(
         name='pycraf.antenna.cyantenna',
         sources=[os.path.join(PYXDIR, 'cyantenna.pyx')],

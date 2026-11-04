@@ -1,0 +1,31 @@
+#!/bin/bash
+
+set -e
+
+: "${LIBOMP_PREFIX:?Set LIBOMP_PREFIX to the LLVM OpenMP installation prefix}"
+if [[ ! -f "$LIBOMP_PREFIX/include/omp.h" || ! -f "$LIBOMP_PREFIX/lib/libomp.dylib" ]]; then
+    echo "LIBOMP_PREFIX must contain include/omp.h and lib/libomp.dylib" >&2
+    exit 1
+fi
+
+# Translate the extension-helpers OpenMP flag for Apple Clang.
+args=()
+openmp=false
+compile=false
+for arg in "$@"; do
+    case "$arg" in
+        -fopenmp) openmp=true ;;
+        -c) compile=true; args+=("$arg") ;;
+        *) args+=("$arg") ;;
+    esac
+done
+
+if $openmp; then
+    if $compile; then
+        args+=(-Xclang -fopenmp "-I$LIBOMP_PREFIX/include")
+    else
+        args+=("-L$LIBOMP_PREFIX/lib" -lomp "-Wl,-rpath,$LIBOMP_PREFIX/lib")
+    fi
+fi
+
+exec /usr/bin/clang "${args[@]}"

@@ -189,6 +189,78 @@ should work.
 MacOS
 ~~~~~
 
+Apple Silicon
+^^^^^^^^^^^^^
+
+To build pycraf on Apple Silicon, use a native arm64 CPython interpreter
+and the Xcode Command Line Tools (install them with
+``xcode-select --install`` if needed). Run the following from the pycraf
+source directory:
+
+.. code-block:: bash
+
+    python3 -c "import platform; assert platform.machine() == 'arm64'"
+    python3 -m venv .venv
+    source .venv/bin/activate
+    export ARCHFLAGS="-arch arm64"
+    python -m pip install .
+
+Apple Clang can build pycraf without OpenMP. In that build, the compiled
+routines run on a single thread and ``pathprof.set_num_threads()`` has no
+effect. An OpenMP-capable compiler and runtime enable multithreading.
+
+On macOS 27 with CPython 3.10, the default SciPy 1.15.3 wheel can fail to
+load. In the active virtual environment, install the alternate arm64
+wheel before installing pycraf:
+
+.. code-block:: bash
+
+    scipy_wheel_dir="$(mktemp -d)"
+    python -m pip download --only-binary=:all: --no-deps \
+        --platform macosx_12_0_arm64 --dest "$scipy_wheel_dir" "scipy==1.15.3"
+    python -m pip install "$scipy_wheel_dir"/scipy-1.15.3-cp310-cp310-macosx_12_0_arm64.whl
+
+To build a reusable wheel for the active Python version:
+
+.. code-block:: bash
+
+    python -m pip install build
+    python -m build --wheel
+
+The GitHub Actions workflow ``macOS arm64 wheels`` builds and tests wheels
+for CPython 3.10 through 3.14 and makes them available as build artifacts.
+
+OpenMP wheels
+"""""""""""""
+
+To build an OpenMP wheel with Apple Clang, install LLVM's OpenMP runtime
+(``brew install libomp``, or build `libomp from LLVM source
+<https://openmp.llvm.org/Building.html>`__). Set ``LIBOMP_PREFIX`` to the
+installation prefix containing ``include/omp.h`` and ``lib/libomp.dylib``.
+Copy the license for that version of ``libomp`` into ``licenses/`` so it
+ships with the bundled runtime.
+
+From the source directory with the native Python environment activated,
+build the wheel from a fresh source distribution and bundle the runtime:
+
+.. code-block:: bash
+
+    export LIBOMP_PREFIX="$(brew --prefix libomp)"  # or your LLVM installation prefix
+    export CC="$PWD/.ci/clang-openmp"
+    export ARCHFLAGS="-arch arm64"
+    export LDFLAGS="${LDFLAGS:+$LDFLAGS }-Wl,-headerpad_max_install_names"
+    python -m pip install build delocate
+    wheel_dir="$(mktemp -d)"
+    python -m build --outdir "$wheel_dir"
+    delocate-wheel --require-archs arm64 -w dist/openmp "$wheel_dir"/pycraf-*.whl
+
+``delocate-wheel`` sets the wheel's macOS compatibility tag based on the
+bundled binaries. Use ``pycraf.pathprof.set_num_threads()`` to set the OpenMP
+thread count at runtime.
+
+Intel Macs
+^^^^^^^^^^
+
 Installation on MacOS can be a bit tricky, because the standard C compiler
 does not support OpenMP. We provide wheels on PyPI, such that you can
 
@@ -206,7 +278,7 @@ is likely outdated heavily, but we currently don't have access to a
 MacOS machine. You may be able to adapt (if you're successful, let us know).
 
 LLVM
-^^^^
+""""
 
 .. code-block:: bash
 
@@ -220,7 +292,7 @@ LLVM
 Then follow the instructions in :ref:`source_install`.
 
 gcc
-^^^
+"""
 
 .. code-block:: bash
 

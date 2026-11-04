@@ -39,7 +39,10 @@ dependencies = [
   "numpy",
   "pip",
   "pyproj",
-  "pytest",
+  # Python 3.10 and earlier cannot install pytest-remotedata 0.4.3,
+  # which fixes the option registration conflict with pytest 9.2.
+  "pytest<9.2; python_version < '3.11'",
+  "pytest; python_version >= '3.11'",
   "pytest-astropy",
   "pytest-doctestplus",
   "pytest-remotedata",

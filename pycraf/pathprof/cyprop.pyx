@@ -13,7 +13,6 @@ cimport cython
 from cython.parallel import prange, parallel
 from libc.stdlib cimport abort, malloc, free
 cimport numpy as np
-cimport openmp
 from libc.math cimport (
     exp, log, log10, sqrt, fabs, M_PI, floor,
     sin, cos, tan, asin, acos, atan, atan2, tanh,
@@ -31,6 +30,23 @@ from .. import conversions as cnv
 from .. import utils
 
 np.import_array()
+
+cdef extern from *:
+    """
+    #ifdef _OPENMP
+    #include <omp.h>
+    #endif
+
+    static void pycraf_set_num_threads(int nthreads)
+    {
+    #ifdef _OPENMP
+        omp_set_num_threads(nthreads);
+    #else
+        (void)nthreads;
+    #endif
+    }
+    """
+    void pycraf_set_num_threads(int nthreads)
 
 
 __all__ = [
@@ -360,9 +376,10 @@ def set_num_threads(int nthreads):
     -----
     - This can also be controlled by setting the environment variable
       `OMP_NUM_THREADS`.
+    - Builds without OpenMP always use a single thread.
     '''
 
-    openmp.omp_set_num_threads(nthreads)
+    pycraf_set_num_threads(nthreads)
 
 
 cdef inline double f_max(double a, double b) nogil:
