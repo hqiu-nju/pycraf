@@ -35,7 +35,7 @@ jobs:
 
       - name: Test installed wheel
         run: |
-          python -m pip install --only-binary=:all: dist/*-macosx_*_arm64.whl h5py
+          python -m pip install --only-binary=:all: dist/*-macosx_*_universal2.whl h5py
           python -m pip check
           cd "$RUNNER_TEMP"
           python -m pytest -c "$GITHUB_WORKSPACE/pyproject.toml" --pyargs pycraf --remote-data=none
@@ -43,5 +43,5 @@ jobs:
       - uses: actions/upload-artifact@v7
         with:
           name: pycraf-macos-arm64-py${{ matrix.python-version }}
-          path: dist/*-macosx_*_arm64.whl
+          path: dist/*-macosx_*_universal2.whl
           if-no-files-found: error
